@@ -13,3 +13,7 @@
           exprs))))
 
 (parseFile "tests/public/sample_case.scm")
+(parseFile "tests/public/core_01.scm")
+(parseFile "tests/public/core_02.scm")
+(parseFile "tests/public/let_01.scm")
+(parseFile "tests/public/lambda_01.scm")
