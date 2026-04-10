@@ -13,14 +13,27 @@ public class Parser{
 	}
 
 	private String consume() { return tokens[pos++]; }
+	private String peek() { return tokens[pos]; }
+
 
 	private Expressions parseExpr() {
 		String tok = consume();
 
+		if (tok.equals("(")) {
+			Expressions fn = parseExpr();
+			Expressions[] args = new Expressions[tokens.length];
+			int count = 0;
+			while (!peek().equals(")")) {
+				args[count++] = parseExpr();
+			}
+			consume();  
+			return new Expressions.FunctionExpression(fn, args);
+		}
+
 		if (tok.equals("#t")) return new Expressions.Bool(true);
 		if (tok.equals("#f")) return new Expressions.Bool(false);
 		if (tok.equals("+") || tok.equals("-") || 
-		tok.equals("*")) return new Expressions.Prim(tok);
+				tok.equals("*")) return new Expressions.Prim(tok);
 
 		try { return new Expressions.Num(Integer.parseInt(tok)); }
 		catch (NumberFormatException e) {}
