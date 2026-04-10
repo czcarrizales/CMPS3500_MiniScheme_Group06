@@ -23,9 +23,9 @@ void get_parenthesis();
 
 int main(int argc, char* argv[]) {
     if(argc != 2) {
-        //cerr << "Usage: " << argv[0] << " <input_file>" << endl;
-        //return 1;
-        argv[1] = "core_02.scm";
+        cerr << "Usage: " << argv[0] << " <input_file>" << endl;
+        return 1;
+        //argv[1] = "bool_03.scm";
     }
     
     parseFile(argv[1]);
@@ -46,11 +46,13 @@ void parseFile(const string& name_of_file){
         get_parenthesis();
         operation();
     }
-    file.close();
+
 }
 
 void get_parenthesis(){
     int aux = 0; // counter for index
+    open_parenthesis.clear();
+    close_parenthesis.clear();
         for(char c : expression){
             if(c == '('){
                 open_parenthesis.push_back(aux);
@@ -63,9 +65,11 @@ void get_parenthesis(){
 
     if(open_parenthesis.size() == 0 || close_parenthesis.size() == 0){
         if(expression.find('#') != string::npos && expression.size() == 2){
-            if(expression.find('F') || expression.find('f')){
+            cout << expression.find('t') << endl;
+            cout << expression.find('f') << endl;
+            if(expression.find('f') != string::npos){
                 expression = "False";
-            }else if(expression.find('T') || expression.find('t')){
+            }else if(expression.find('t') != string::npos){
                 expression = "True";
             }else{
                 cerr << "INVALID_INPUT" << endl;
@@ -82,6 +86,23 @@ void operation(){
         if(open_parenthesis[i] < close_parenthesis[0]){
             string s = expression.substr(open_parenthesis[i] + 1, close_parenthesis[0] - (open_parenthesis[i] + 1));
             stringstream values(s);
+            if(s.find("if") != string::npos){
+                string if_return;
+                values >> if_return; // discard the "if" statement
+                values >> if_return;
+                if(if_return == "#t"){
+                    values >> if_return;
+                    expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, if_return);
+                }else if(if_return == "#f"){
+                    values >> if_return; // discard value for true 
+                    values >> if_return;
+                    expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, if_return);
+                }
+                get_parenthesis();
+
+            }
+
+
             char sign;
             int result = 0; 
             values >> sign;
@@ -92,6 +113,7 @@ void operation(){
                     while (values >>  aux){
                         result += stoi(aux);
                     }
+                    expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, to_string(result));
                     break;
                 }
 
@@ -99,6 +121,7 @@ void operation(){
                     while (values >>  aux){
                         result -= stoi(aux);
                     }
+                    expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, to_string(result));
                     break;
                 }
 
@@ -107,6 +130,7 @@ void operation(){
                     while (values >>  aux){
                         result *= stoi(aux);
                     }
+                    expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, to_string(result));
                     break;
                 }
 
@@ -115,48 +139,49 @@ void operation(){
                     while (values >>  aux){
                         result /= stoi(aux);
                     }
+                    expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, to_string(result));
                     break;
                 }
 
 //I feel like I will need to change something
                 case '<':{
-                    int i, j;
-                    values >> i;
+                    int k, j;
                     values >> j;
+                    values >> k;
                     
-                    if(i < j){
-                        expression = "True";
+                    if(j < k){
+                        expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, "#t");
                     }else{
-                        expression = "False";
+                        expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, "#f");
                     }
-                    cout << "the result is: " << expression << endl;
-                    exit(0);
+                    
+                    break;
+                    
                 }
 
                 //I feel like I will need to change something
                 case '>':{
-                    int i, j;
-                    values >> i;
+                    int k, j;
                     values >> j;
+                    values >> k;
                     
-                    if(i > j){
-                        expression = "True";
+                    if(j > k){
+                        expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, "#t");
                     }else{
-                        expression = "False";
+                        expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, "#f");
                     }
-                    cout << "the result is: " << expression << endl;
-                    exit(0);
+                    
                 }
+                break;
 
                 default: 
                     cerr << "INVALID_SIGN" << endl;
                     break; 
             } //switch
-            expression.replace(open_parenthesis[i], close_parenthesis[0] - open_parenthesis[i] + 1, to_string(result));
-            open_parenthesis.clear();
-            close_parenthesis.clear();
+            
             get_parenthesis();
         }//if
     }// for
     operation();
 }//function
+
