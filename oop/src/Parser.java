@@ -20,6 +20,17 @@ public class Parser{
 		String tok = consume();
 
 		if (tok.equals("(")) {
+			//if
+			if (peek().equals("if")){
+				consume();
+				Expressions cond = parseExpr();
+				Expressions then = parseExpr();
+				Expressions otherwise = parseExpr();
+				consume(); // eat )
+				return new Expressions.If(cond, then, otherwise);
+			}
+
+			//function call
 			Expressions fn = parseExpr();
 			Expressions[] args = new Expressions[tokens.length];
 			int count = 0;
@@ -32,8 +43,10 @@ public class Parser{
 
 		if (tok.equals("#t")) return new Expressions.Bool(true);
 		if (tok.equals("#f")) return new Expressions.Bool(false);
-		if (tok.equals("+") || tok.equals("-") || 
-				tok.equals("*")) return new Expressions.Prim(tok);
+		
+		if (tok.equals("+") || tok.equals("-") || tok.equals("*")
+			|| tok.equals("<") || tok.equals(">") || tok.equals("="))
+			return new Expressions.Prim(tok);
 
 		try { return new Expressions.Num(Integer.parseInt(tok)); }
 		catch (NumberFormatException e) {}

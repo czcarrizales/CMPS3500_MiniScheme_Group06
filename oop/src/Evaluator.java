@@ -14,6 +14,17 @@ public class Evaluator{
 		if (expr instanceof Expressions.Bool){
 			return ((Expressions.Bool) expr).value;
 		}
+		//if 
+		if (expr instanceof Expressions.If) {
+			Expressions.If ifExpr = (Expressions.If) expr;
+			boolean cond = (Boolean) eval(ifExpr.condition);
+			if (cond) {
+				return eval(ifExpr.then);
+			} else {
+				return eval(ifExpr.otherwise);
+			}
+		}
+
 		//function call
 		if (expr instanceof Expressions.FunctionExpression) {
 			Expressions.FunctionExpression app = (Expressions.FunctionExpression) expr;
@@ -25,6 +36,9 @@ public class Evaluator{
 			if (op.equals("+")) return left + right;
 			if (op.equals("-")) return left - right;
 			if (op.equals("*")) return left * right;
+			if (op.equals("<")) return left < right;
+            		if (op.equals(">")) return left > right;
+            		if (op.equals("=")) return left == right;
 		}
 
 		throw new RuntimeException("Not supported yet: ");

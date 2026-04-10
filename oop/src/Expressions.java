@@ -25,7 +25,14 @@ public abstract class Expressions{
 
 
 	//if conditions
-
+	public static class If extends Expressions {
+		public Expressions condition, then, otherwise;
+		public If(Expressions condition, Expressions then, Expressions otherwise) {
+			this.condition = condition;
+			this.then = then;
+			this.otherwise = otherwise;
+		}
+	}
 	//lambda
 
 	//let
