@@ -29,7 +29,7 @@ case "$cmd" in
         fi
         ;;
       oop)
-	result="$(java -cp oop/src MiniScheme "$file")"
+	      result="$(java -cp oop/src MiniScheme "$file")"
         echo "Status: OK"
         echo "Result: ${result}"
         if [[ "$result" == "#t" || "$result" == "#f" ]]; then
@@ -39,11 +39,14 @@ case "$cmd" in
         fi
         ;;
       procedural)
-        echo "Status: ERROR"
-        echo "Error: NOT_IMPLEMENTED"
-	
-
-
+        result="$(./procedural/minischeme "$file")"
+        echo "Status: OK"
+        echo "Result: ${result}"
+        if [[ "$result" == "#t" || "$result" == "#f" ]]; then
+          echo "Type: bool"
+        else
+          echo "Type: int"
+        fi
         ;;
       *)
         echo "Status: ERROR"
