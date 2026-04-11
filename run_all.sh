@@ -61,7 +61,13 @@ case "$cmd" in
     echo "Case: ${file}"
     echo
 
-    echo "procedural: ERROR -> NOT_IMPLEMENTED"
+    proc_result="$(./procedural/minischeme "$file")"
+    if [[ "$proc_result" == "#t" || "$proc_result" == "#f" ]]; then
+      echo "procedural: OK -> ${proc_result} : bool"
+    else
+      echo "procedural: OK -> ${proc_result} : int"
+    fi
+    
     oop_result="$(java -cp oop/src MiniScheme "$file")"
     if [[ "$oop_result" == "#t" || "$oop_result" == "#f" ]]; then
       echo "oop:        OK -> ${oop_result} : bool"
@@ -76,7 +82,7 @@ case "$cmd" in
       echo "functional: OK -> ${result} : int"
     fi
     ;;
-
+    
   *)
     echo "Usage: ./run_all.sh {list-cases|run-case <implementation> <file>|compare-case <file>}"
     exit 1
