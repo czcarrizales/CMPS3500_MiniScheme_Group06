@@ -28,9 +28,22 @@ case "$cmd" in
           echo "Type: int"
         fi
         ;;
-      procedural|oop)
+      oop)
+	result="$(java -cp oop/src MiniScheme "$file")"
+        echo "Status: OK"
+        echo "Result: ${result}"
+        if [[ "$result" == "#t" || "$result" == "#f" ]]; then
+          echo "Type: bool"
+        else
+          echo "Type: int"
+        fi
+        ;;
+      procedural)
         echo "Status: ERROR"
         echo "Error: NOT_IMPLEMENTED"
+	
+
+
         ;;
       *)
         echo "Status: ERROR"
@@ -46,7 +59,12 @@ case "$cmd" in
     echo
 
     echo "procedural: ERROR -> NOT_IMPLEMENTED"
-    echo "oop:        ERROR -> NOT_IMPLEMENTED"
+    oop_result="$(java -cp oop/src MiniScheme "$file")"
+    if [[ "$oop_result" == "#t" || "$oop_result" == "#f" ]]; then
+      echo "oop:        OK -> ${oop_result} : bool"
+    else
+      echo "oop:        OK -> ${oop_result} : int"
+    fi
 
     result="$(sbcl --script functional/evaluator.lisp "$file")"
     if [[ "$result" == "#t" || "$result" == "#f" ]]; then
