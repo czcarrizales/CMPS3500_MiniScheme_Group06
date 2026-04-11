@@ -34,8 +34,15 @@ public abstract class Expressions{
 		}
 	}
 	//lambda
+	//consume lambda 
+	//collect param names until ) 
+	//parse
+	//return lambda
 
 	//let
+	//consume let
+	//get name and parse value
+	//consume and parse
 
 	//function call
 	public static class FunctionExpression extends Expressions {
