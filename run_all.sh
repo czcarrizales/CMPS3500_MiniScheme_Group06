@@ -29,7 +29,7 @@ case "$cmd" in
         fi
         ;;
       oop)
-	      result="$(java -cp oop/src MiniScheme "$file")"
+	      result="$(java -cp oop MiniScheme "$file")"
         echo "Status: OK"
         echo "Result: ${result}"
         if [[ "$result" == "#t" || "$result" == "#f" ]]; then
@@ -68,7 +68,7 @@ case "$cmd" in
       echo "procedural: OK -> ${proc_result} : int"
     fi
     
-    oop_result="$(java -cp oop/src MiniScheme "$file")"
+    oop_result="$(java -cp oop MiniScheme "$file")"
     if [[ "$oop_result" == "#t" || "$oop_result" == "#f" ]]; then
       echo "oop:        OK -> ${oop_result} : bool"
     else
