@@ -131,10 +131,18 @@ abstract class Expressions{
 			}
 	}
 	//let 
+	//new child environment
+	//add name and value to the new environment 
 
 	//lambda
+	//store name and body expression and current environment 
+	//return without evaluating the body 
+	//body only evalauates when the function is actually called
 
 	//add-on cond
+	//loop through each clause 
+	//evaluate each condition until true
+	//reeturn result if true 
 
 	//define 
 	public static class Define extends Expressions {
