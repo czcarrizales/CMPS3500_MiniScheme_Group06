@@ -29,14 +29,19 @@ case "$cmd" in
         fi
         ;;
       oop)
-	      result="$(java -cp oop MiniScheme "$file")"
-        echo "Status: OK"
+	result="$(java -cp oop MiniScheme "$file")"
+        if [[ "$result" == *"_"* ]]; then
+	echo "Status: ERROR"
+	echo "Error: ${result}"
+	else
+	echo "Status: OK"
         echo "Result: ${result}"
         if [[ "$result" == "#t" || "$result" == "#f" ]]; then
           echo "Type: bool"
         else
           echo "Type: int"
         fi
+	fi
         ;;
       procedural)
         result="$(./procedural/minischeme "$file")"
