@@ -15,7 +15,33 @@ Working core features in functional:
 - lexical scope
 
 Progress in procedural:
-- progress here
+  supported features:
+  - Integer literals
+  - Boolean literals (#t, #f)
+  - Arithmetic operations: + - * /
+  - Comparisons: = < > <= >=
+  - if expressions
+  - let bindings
+  - lambda functions
+  - function application
+  - define (top-level)
+  - recursion
+  - lexical scope
+  
+  The program handles the following errors:
+  - PARSE_ERROR
+  - UNDECLARED_IDENTIFIER
+  - WRONG_ARITY
+  - TYPE_MISMATCH
+  - DIVISION_BY_ZERO
+  
+  Notes:
+  - The program reads the entire file using readAll()
+  - Input is split into tokens using splitTokens()
+  - Expressions are parsed into a tree structure (Node)
+  - Each Node is evaluated recursively
+  - An environment structure is used to store variables and functions
+  - The last expression evaluated is printed as the result
 
 Progress in oop:
 - progress here
