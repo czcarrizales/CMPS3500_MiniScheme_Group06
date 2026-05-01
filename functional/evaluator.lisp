@@ -1,63 +1,95 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; NAME: Chazz Carrizales
-; ASGT: MiniScheme Checkpoint 2
+; NAME: Chazz
+; ASGT: MiniScheme Checkpoint 3
 ; ORGN: CSUB - CMPS 3500
 ; FILE: evaluator.lisp
-; DATE: 04/10/2026
+; DATE: 05/01/2026
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; This condition stores the required project error category.
+(define-condition minisError (error)
+  ((category :initarg :category :reader getErrorCategory)))
+
+; This raises a MiniScheme error.
+(defun raiseMiniError (error_category)
+  (error 'minisError :category error_category))
 
 ; This reads the whole file into one string.
 (defun readFileAsString (file_path)
-  (with-open-file (input_stream file_path)
-    (let ((file_contents
-            (make-string (file-length input_stream))))
-      (read-sequence file_contents input_stream)
-      file_contents)))
+  (handler-case
+      (with-open-file (input_stream file_path)
+        (let ((file_contents
+                (make-string (file-length input_stream))))
+          (read-sequence file_contents input_stream)
+          file_contents))
+    (error ()
+      (raiseMiniError "PARSE_ERROR"))))
 
-; This changes #t and #f into words that SBCL can read.
+; This changes #t and #f into symbols SBCL can read.
 (defun replaceBooleanTokens (file_contents)
   (with-output-to-string (output_stream)
-    (loop with text_length = (length file_contents)
-          for index from 0 below text_length
-          do
-            (cond
-              ((and (< (+ index 1) text_length)
-                    (char= (char file_contents index) #\#)
-                    (char= (char file_contents (+ index 1)) #\t))
-               (write-string "true" output_stream)
-               (incf index))
-              ((and (< (+ index 1) text_length)
-                    (char= (char file_contents index) #\#)
-                    (char= (char file_contents (+ index 1)) #\f))
-               (write-string "false" output_stream)
-               (incf index))
-              (t
-               (write-char (char file_contents index)
-                           output_stream))))))
+    (let ((current_index 0)
+          (text_length (length file_contents)))
+      (loop while (< current_index text_length)
+            do
+              (cond
+                ((and (< (+ current_index 1) text_length)
+                      (char= (char file_contents current_index) #\#)
+                      (char= (char file_contents
+                                    (+ current_index 1)) #\t))
+                 (write-string "true" output_stream)
+                 (setf current_index (+ current_index 2)))
+
+                ((and (< (+ current_index 1) text_length)
+                      (char= (char file_contents current_index) #\#)
+                      (char= (char file_contents
+                                    (+ current_index 1)) #\f))
+                 (write-string "false" output_stream)
+                 (setf current_index (+ current_index 2)))
+
+                (t
+                 (write-char (char file_contents current_index)
+                             output_stream)
+                 (setf current_index (+ current_index 1))))))))
 
 ; This reads every expression from the file.
 (defun readAllExpressions (file_path)
-  (let* ((file_contents (readFileAsString file_path))
-         (updated_contents
-           (replaceBooleanTokens file_contents)))
-    (with-input-from-string (input_stream updated_contents)
-      (loop for current_expression = (read input_stream nil 'eof)
-            until (eq current_expression 'eof)
-            collect current_expression))))
+  (handler-case
+      (let* ((file_contents (readFileAsString file_path))
+             (updated_contents
+               (replaceBooleanTokens file_contents)))
+        (with-input-from-string (input_stream updated_contents)
+          (loop for current_expression = (read input_stream nil 'eof)
+                until (eq current_expression 'eof)
+                collect current_expression)))
+    (minisError (problem)
+      (raiseMiniError (getErrorCategory problem)))
+    (error ()
+      (raiseMiniError "PARSE_ERROR"))))
 
-; This looks for a variable in the environment.
+; This checks for an exact list length.
+(defun hasLength (expression expected_length)
+  (and (listp expression)
+       (= (length expression) expected_length)))
+
+; This checks that every item is a symbol.
+(defun allSymbols (item_list)
+  (and (listp item_list)
+       (every #'symbolp item_list)))
+
+; This finds a variable in the environment.
 (defun lookupVariable (variable_name environment)
   (let ((matching_binding (assoc variable_name environment)))
     (if matching_binding
         (cdr matching_binding)
-        (error "UNDECLARED_IDENTIFIER"))))
+        (raiseMiniError "UNDECLARED_IDENTIFIER"))))
 
-; This adds new variable bindings to the environment.
+; This adds new bindings to the environment.
 (defun extendEnvironment (parameter_names argument_values environment)
   (append (pairlis parameter_names argument_values)
           environment))
 
-; This makes a closure.
+; This creates a closure for lexical scope.
 (defun createClosure (parameter_names body_expressions saved_environment)
   (list 'closure
         parameter_names
@@ -69,7 +101,7 @@
   (and (listp possible_closure)
        (eq (first possible_closure) 'closure)))
 
-; This gets the parameter list from a closure.
+; This gets the parameters from a closure.
 (defun getClosureParameters (closure_value)
   (second closure_value))
 
@@ -85,34 +117,49 @@
 (defun isPrimitiveOperator (operator_symbol)
   (member operator_symbol '(+ - * / = < > <= >=)))
 
-; In MiniScheme, only false counts as false.
+; In MiniScheme, only false is false.
 (defun isTrueValue (value)
   (not (eq value 'false)))
 
+; This checks that all arguments are integers.
+(defun checkIntegerArguments (argument_values)
+  (dolist (single_value argument_values)
+    (unless (integerp single_value)
+      (raiseMiniError "TYPE_MISMATCH"))))
+
+; This checks that primitive operators have enough arguments.
+(defun checkPrimitiveArity (argument_values)
+  (when (< (length argument_values) 2)
+    (raiseMiniError "WRONG_ARITY")))
+
+; This checks division by zero.
+(defun checkDivisionByZero (argument_values)
+  (dolist (single_value (rest argument_values))
+    (when (= single_value 0)
+      (raiseMiniError "DIVISION_BY_ZERO"))))
+
+; This performs integer division.
+(defun applyIntegerDivision (argument_values)
+  (checkDivisionByZero argument_values)
+  (truncate (reduce #'/ argument_values)))
+
 ; This runs built-in math and comparison operators.
 (defun applyPrimitiveOperator (operator_symbol evaluated_arguments)
+  (checkPrimitiveArity evaluated_arguments)
+  (checkIntegerArguments evaluated_arguments)
+
   (case operator_symbol
     (+  (apply #'+ evaluated_arguments))
     (-  (apply #'- evaluated_arguments))
     (*  (apply #'* evaluated_arguments))
-    (/  (apply #'/ evaluated_arguments))
-    (=  (if (apply #'= evaluated_arguments)
-            'true
-            'false))
-    (<  (if (apply #'< evaluated_arguments)
-            'true
-            'false))
-    (>  (if (apply #'> evaluated_arguments)
-            'true
-            'false))
-    (<= (if (apply #'<= evaluated_arguments)
-            'true
-            'false))
-    (>= (if (apply #'>= evaluated_arguments)
-            'true
-            'false))
+    (/  (applyIntegerDivision evaluated_arguments))
+    (=  (if (apply #'= evaluated_arguments) 'true 'false))
+    (<  (if (apply #'< evaluated_arguments) 'true 'false))
+    (>  (if (apply #'> evaluated_arguments) 'true 'false))
+    (<= (if (apply #'<= evaluated_arguments) 'true 'false))
+    (>= (if (apply #'>= evaluated_arguments) 'true 'false))
     (otherwise
-      (error "TYPE_MISMATCH"))))
+      (raiseMiniError "TYPE_MISMATCH"))))
 
 ; This evaluates several expressions and keeps the last result.
 (defun evaluateExpressionList (expression_list environment)
@@ -121,8 +168,21 @@
       (setf last_result
             (evaluateExpression current_expression environment)))))
 
-; This evaluates the values inside a let binding list.
+; This checks let binding syntax.
+(defun checkLetBindings (binding_list)
+  (unless (listp binding_list)
+    (raiseMiniError "PARSE_ERROR"))
+
+  (dolist (single_binding binding_list)
+    (unless (and (listp single_binding)
+                 (= (length single_binding) 2)
+                 (symbolp (first single_binding)))
+      (raiseMiniError "PARSE_ERROR"))))
+
+; This evaluates the values inside let bindings.
 (defun evaluateLetBindings (binding_list environment)
+  (checkLetBindings binding_list)
+
   (mapcar
    (lambda (single_binding)
      (cons (first single_binding)
@@ -130,7 +190,7 @@
                                environment)))
    binding_list))
 
-; This calls a function with its argument values.
+; This calls a closure with argument values.
 (defun evaluateFunctionCall (function_value argument_values)
   (if (isClosure function_value)
       (let ((parameter_names
@@ -140,27 +200,31 @@
             (saved_environment
               (getClosureEnvironment function_value)))
         (if (/= (length parameter_names) (length argument_values))
-            (error "WRONG_ARITY")
+            (raiseMiniError "WRONG_ARITY")
             (evaluateExpressionList
              body_expressions
              (extendEnvironment parameter_names
                                 argument_values
                                 saved_environment))))
-      (error "TYPE_MISMATCH")))
+      (raiseMiniError "TYPE_MISMATCH")))
 
 ; This evaluates an if expression.
 (defun evaluateIfExpression (expression environment)
+  (unless (hasLength expression 4)
+    (raiseMiniError "PARSE_ERROR"))
+
   (let ((test_result
           (evaluateExpression (second expression)
                               environment)))
     (if (isTrueValue test_result)
-        (evaluateExpression (third expression)
-                            environment)
-        (evaluateExpression (fourth expression)
-                            environment))))
+        (evaluateExpression (third expression) environment)
+        (evaluateExpression (fourth expression) environment))))
 
 ; This evaluates a let expression.
 (defun evaluateLetExpression (expression environment)
+  (when (< (length expression) 3)
+    (raiseMiniError "PARSE_ERROR"))
+
   (let* ((binding_list (second expression))
          (body_expressions (cddr expression))
          (new_bindings
@@ -171,10 +235,15 @@
                             extended_environment)))
 
 ; This evaluates a lambda expression.
-; It returns a closure instead of running the body right away.
 (defun evaluateLambdaExpression (expression environment)
+  (when (< (length expression) 3)
+    (raiseMiniError "PARSE_ERROR"))
+
   (let ((parameter_names (second expression))
         (body_expressions (cddr expression)))
+    (unless (allSymbols parameter_names)
+      (raiseMiniError "PARSE_ERROR"))
+
     (createClosure parameter_names
                    body_expressions
                    environment)))
@@ -190,6 +259,39 @@
                                    environment))
              argument_expressions))))
 
+; This evaluates cond clauses in order.
+(defun evaluateCondExpression (expression environment)
+  (when (< (length expression) 2)
+    (raiseMiniError "PARSE_ERROR"))
+
+  (block cond_result
+    (let ((clause_list (rest expression)))
+      (loop for single_clause in clause_list
+            for remaining_clauses on clause_list
+            do
+              (unless (and (listp single_clause)
+                           (= (length single_clause) 2))
+                (raiseMiniError "PARSE_ERROR"))
+
+              (let ((test_expression (first single_clause))
+                    (result_expression (second single_clause)))
+                (cond
+                  ((eq test_expression 'else)
+                   (unless (null (rest remaining_clauses))
+                     (raiseMiniError "PARSE_ERROR"))
+                   (return-from cond_result
+                     (evaluateExpression result_expression
+                                         environment)))
+
+                  ((isTrueValue
+                    (evaluateExpression test_expression environment))
+                   (return-from cond_result
+                     (evaluateExpression result_expression
+                                         environment))))))
+
+      ; If no clause matches, return false.
+      'false)))
+
 ; This evaluates a normal function call.
 (defun evaluateApplicationExpression (expression environment)
   (let ((function_value
@@ -202,7 +304,7 @@
                   (rest expression))))
     (evaluateFunctionCall function_value argument_values)))
 
-; This is the main evaluator.
+; This is the main expression evaluator.
 (defun evaluateExpression (expression environment)
   (cond
     ((integerp expression)
@@ -218,6 +320,9 @@
      (lookupVariable expression environment))
 
     ((listp expression)
+     (when (null expression)
+       (raiseMiniError "PARSE_ERROR"))
+
      (let ((first_part (first expression)))
        (cond
          ((eq first_part 'if)
@@ -229,39 +334,117 @@
          ((eq first_part 'lambda)
           (evaluateLambdaExpression expression environment))
 
+         ((eq first_part 'cond)
+          (evaluateCondExpression expression environment))
+
+         ((eq first_part 'define)
+          (raiseMiniError "PARSE_ERROR"))
+
          ((isPrimitiveOperator first_part)
           (evaluatePrimitiveExpression expression environment))
 
          (t
-          (evaluateApplicationExpression expression
-                                         environment)))))
+          (evaluateApplicationExpression expression environment)))))
 
     (t
-     (error "TYPE_MISMATCH"))))
+     (raiseMiniError "TYPE_MISMATCH"))))
 
-; This prints booleans in MiniScheme style.
-(defun printMiniSchemeValue (value)
+; This handles a top-level define.
+(defun evaluateDefineExpression (expression environment)
+  (unless (and (hasLength expression 3)
+               (symbolp (second expression)))
+    (raiseMiniError "PARSE_ERROR"))
+
+  (let* ((variable_name (second expression))
+         (placeholder_binding (cons variable_name nil))
+         (extended_environment
+           (cons placeholder_binding environment))
+         (defined_value
+           (evaluateExpression (third expression)
+                               extended_environment)))
+    (setf (cdr placeholder_binding) defined_value)
+    (values defined_value extended_environment nil)))
+
+; This evaluates one top-level expression.
+(defun evaluateTopLevelExpression (expression environment)
+  (if (and (listp expression)
+           (not (null expression))
+           (eq (first expression) 'define))
+      (evaluateDefineExpression expression environment)
+      (values (evaluateExpression expression environment)
+              environment
+              t)))
+
+; This evaluates the whole file.
+(defun evaluateProgram (expression_list)
+  (when (null expression_list)
+    (raiseMiniError "PARSE_ERROR"))
+
+  (let ((environment nil)
+        (last_result nil)
+        (has_printable_result nil))
+    (dolist (current_expression expression_list)
+      (multiple-value-bind
+          (current_result updated_environment is_printable)
+          (evaluateTopLevelExpression current_expression environment)
+        (setf environment updated_environment)
+        (when is_printable
+          (setf last_result current_result)
+          (setf has_printable_result t))))
+
+    (if has_printable_result
+        last_result
+        'true)))
+
+; This turns a value into MiniScheme text.
+(defun valueToString (value)
   (cond
     ((eq value 'true)
-     (format t "#t~%"))
+     "#t")
     ((eq value 'false)
-     (format t "#f~%"))
+     "#f")
+    ((isClosure value)
+     "<function>")
     (t
-     (format t "~a~%" value))))
+     (format nil "~a" value))))
 
-; This reads one file, evaluates it, and prints the answer.
+; This gets the MiniScheme type.
+(defun valueType (value)
+  (cond
+    ((integerp value)
+     "int")
+    ((or (eq value 'true)
+         (eq value 'false))
+     "bool")
+    ((isClosure value)
+     "function")
+    (t
+     "unknown")))
+
+; This reads and evaluates one file.
 (defun evaluateFile (file_path)
   (let* ((expression_list (readAllExpressions file_path))
-         (final_result
-           (evaluateExpressionList expression_list nil)))
-    (printMiniSchemeValue final_result)))
+         (final_result (evaluateProgram expression_list)))
+    final_result))
 
-; This lets the program run from the terminal.
+; This prints output for run_all.sh to parse.
+(defun printProgramResult (value)
+  (format t "OK|~a|~a~%"
+          (valueToString value)
+          (valueType value)))
+
+; This runs the evaluator from the terminal.
 (defun main ()
   (let ((command_line_arguments sb-ext:*posix-argv*))
     (if (> (length command_line_arguments) 1)
-        (evaluateFile (car (last command_line_arguments)))
-        (format t
-                "Usage: sbcl --script functional/evaluator.lisp <file>~%"))))
+        (let ((file_path (car (last command_line_arguments))))
+          (handler-case
+              (printProgramResult (evaluateFile file_path))
+            (minisError (problem)
+              (format t "ERROR|~a~%"
+                      (getErrorCategory problem)))
+            (error ()
+              (format t "ERROR|PARSE_ERROR~%"))))
+        (format t "ERROR|PARSE_ERROR~%"))))
 
 (main)
