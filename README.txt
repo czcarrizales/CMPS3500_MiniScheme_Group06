@@ -1,18 +1,24 @@
-MiniScheme Checkpoint 2
+MiniScheme Checkpoint 3
 
-Fully functional implementation:
-- functional (Common Lisp)
-
-Working core features in functional:
-- integer literals
-- boolean literals
-- primitive arithmetic
-- primitive comparisons
-- if
-- let
-- lambda
-- function application
-- lexical scope
+Functional (Common Lisp):
+- Runs through run_all.sh
+- Supports integer literals
+- Supports boolean literals
+- Supports primitive arithmetic and comparisons
+- Supports if
+- Supports let
+- Supports lambda
+- Supports function application
+- Supports define
+- Supports recursion
+- Supports lexical scope
+- Supports cond
+- Handles required errors:
+  - PARSE_ERROR
+  - UNDECLARED_IDENTIFIER
+  - WRONG_ARITY
+  - TYPE_MISMATCH
+  - DIVISION_BY_ZERO
 
 Progress in procedural:
   supported features:
@@ -27,6 +33,7 @@ Progress in procedural:
   - define (top-level)
   - recursion
   - lexical scope
+  - cond
   
   The program handles the following errors:
   - PARSE_ERROR
@@ -47,13 +54,13 @@ Progress in oop:
 - progress here
 
 Requirements:
-- SBCL (Steel Bank Common Lisp)
-
-Install SBCL:
-- Windows: https://www.sbcl.org/
-- Mac: brew install sbcl
-- Linux (Ubuntu/Debian): sudo apt install sbcl
+- Functional: SBCL
+- Procedural: g++
+- Object-Oriented: Java JDK
 
 How to run:
+- ./run_all.sh list-cases
 - ./run_all.sh run-case functional tests/public/core_01.scm
+- ./run_all.sh run-case procedural tests/public/core_01.scm
+- ./run_all.sh run-case oop tests/public/core_01.scm
 - ./run_all.sh compare-case tests/public/core_01.scm

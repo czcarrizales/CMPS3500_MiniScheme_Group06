@@ -36,7 +36,7 @@ case "$cmd" in
   ;;
         oop)
         mkdir -p oop/bin
-        javac oop/src/*.java -d oop/bin
+        javac oop/MiniScheme.java -d oop/bin
         result="$(java -cp oop/bin MiniScheme "$file")"
 
         if [[ "$result" == *"UNDECLARED_IDENTIFIER"* || \
@@ -68,36 +68,43 @@ case "$cmd" in
     esac
     ;;
 
-  compare-case)
+    compare-case)
     file="${2:-}"
 
     echo "Case: ${file}"
     echo
 
-    proc_result="$(./procedural/minischeme "$file")"
-    if [[ "$proc_result" == "#t" || "$proc_result" == "#f" ]]; then
-      echo "procedural: OK -> ${proc_result} : bool"
+    procedural_output="$(./run_all.sh run-case procedural "$file")"
+    procedural_status="$(echo "$procedural_output" | grep '^Status:' | cut -d' ' -f2)"
+    if [[ "$procedural_status" == "OK" ]]; then
+      procedural_result="$(echo "$procedural_output" | grep '^Result:' | cut -d' ' -f2-)"
+      procedural_type="$(echo "$procedural_output" | grep '^Type:' | cut -d' ' -f2)"
+      echo "procedural: OK -> ${procedural_result} : ${procedural_type}"
     else
-      echo "procedural: OK -> ${proc_result} : int"
-    fi
-    
-    oop_result="$(java -cp oop MiniScheme "$file")"
-    if [[ "$oop_result" == "#t" || "$oop_result" == "#f" ]]; then
-      echo "oop:        OK -> ${oop_result} : bool"
-    else
-      echo "oop:        OK -> ${oop_result} : int"
+      procedural_error="$(echo "$procedural_output" | grep '^Error:' | cut -d' ' -f2-)"
+      echo "procedural: ERROR -> ${procedural_error}"
     fi
 
-    result="$(sbcl --script functional/evaluator.lisp "$file")"
-    if [[ "$result" == "#t" || "$result" == "#f" ]]; then
-      echo "functional: OK -> ${result} : bool"
+    oop_output="$(./run_all.sh run-case oop "$file")"
+    oop_status="$(echo "$oop_output" | grep '^Status:' | cut -d' ' -f2)"
+    if [[ "$oop_status" == "OK" ]]; then
+      oop_result="$(echo "$oop_output" | grep '^Result:' | cut -d' ' -f2-)"
+      oop_type="$(echo "$oop_output" | grep '^Type:' | cut -d' ' -f2)"
+      echo "oop:        OK -> ${oop_result} : ${oop_type}"
     else
-      echo "functional: OK -> ${result} : int"
+      oop_error="$(echo "$oop_output" | grep '^Error:' | cut -d' ' -f2-)"
+      echo "oop:        ERROR -> ${oop_error}"
     fi
-    ;;
-    
-  *)
-    echo "Usage: ./run_all.sh {list-cases|run-case <implementation> <file>|compare-case <file>}"
-    exit 1
+
+    functional_output="$(./run_all.sh run-case functional "$file")"
+    functional_status="$(echo "$functional_output" | grep '^Status:' | cut -d' ' -f2)"
+    if [[ "$functional_status" == "OK" ]]; then
+      functional_result="$(echo "$functional_output" | grep '^Result:' | cut -d' ' -f2-)"
+      functional_type="$(echo "$functional_output" | grep '^Type:' | cut -d' ' -f2)"
+      echo "functional: OK -> ${functional_result} : ${functional_type}"
+    else
+      functional_error="$(echo "$functional_output" | grep '^Error:' | cut -d' ' -f2-)"
+      echo "functional: ERROR -> ${functional_error}"
+    fi
     ;;
 esac
