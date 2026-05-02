@@ -3,6 +3,16 @@ set -euo pipefail
 
 cmd="${1:-}"
 
+check_file_exists() {
+  file="$1"
+
+  if [[ -z "$file" || ! -f "$file" ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
 case "$cmd" in
   list-cases)
     find tests/public challenges/public -type f \
@@ -15,6 +25,12 @@ case "$cmd" in
 
     echo "Implementation: ${impl}"
     echo "Case: ${file}"
+
+    if ! check_file_exists "$file"; then
+  echo "Status: ERROR"
+  echo "Error: PARSE_ERROR"
+  exit 0
+fi
 
     case "$impl" in
       functional)
@@ -73,6 +89,13 @@ case "$cmd" in
 
     echo "Case: ${file}"
     echo
+
+    if ! check_file_exists "$file"; then
+  echo "procedural: ERROR -> PARSE_ERROR"
+  echo "oop:        ERROR -> PARSE_ERROR"
+  echo "functional: ERROR -> PARSE_ERROR"
+  exit 0
+fi
 
     procedural_output="$(./run_all.sh run-case procedural "$file")"
     procedural_status="$(echo "$procedural_output" | grep '^Status:' | cut -d' ' -f2)"
