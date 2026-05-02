@@ -18,40 +18,48 @@ case "$cmd" in
 
     case "$impl" in
       functional)
-        result="$(sbcl --script functional/evaluator.lisp "$file")"
-        echo "Status: OK"
-        echo "Result: ${result}"
+  raw_output="$(sbcl --script functional/evaluator.lisp "$file")"
 
-        if [[ "$result" == "#t" || "$result" == "#f" ]]; then
-          echo "Type: bool"
+  if [[ "$raw_output" == OK\|* ]]; then
+    IFS='|' read -r status result result_type <<< "$raw_output"
+    echo "Status: OK"
+    echo "Result: ${result}"
+    echo "Type: ${result_type}"
+  elif [[ "$raw_output" == ERROR\|* ]]; then
+    IFS='|' read -r status error_category <<< "$raw_output"
+    echo "Status: ERROR"
+    echo "Error: ${error_category}"
+  else
+    echo "Status: ERROR"
+    echo "Error: PARSE_ERROR"
+  fi
+  ;;
+        oop)
+        mkdir -p oop/bin
+        javac oop/src/*.java -d oop/bin
+        result="$(java -cp oop/bin MiniScheme "$file")"
+
+        if [[ "$result" == *"UNDECLARED_IDENTIFIER"* || \
+              "$result" == *"DIVISION_BY_ZERO"* || \
+              "$result" == *"WRONG_ARITY"* || \
+              "$result" == *"TYPE_MISMATCH"* || \
+              "$result" == *"PARSE_ERROR"* ]]; then
+          echo "Status: ERROR"
+          echo "Error: ${result}"
         else
-          echo "Type: int"
+          echo "Status: OK"
+          echo "Result: ${result}"
+
+          if [[ "$result" == "#t" || "$result" == "#f" ]]; then
+            echo "Type: bool"
+          else
+            echo "Type: int"
+          fi
         fi
         ;;
-      oop)
-	result="$(java -cp oop MiniScheme "$file")"
-        if [[ "$result" == *"_"* ]]; then
-	echo "Status: ERROR"
-	echo "Error: ${result}"
-	else
-	echo "Status: OK"
-        echo "Result: ${result}"
-        if [[ "$result" == "#t" || "$result" == "#f" ]]; then
-          echo "Type: bool"
-        else
-          echo "Type: int"
-        fi
-	fi
-        ;;
-      procedural)
-        result="$(./procedural/minischeme "$file")"
-        echo "Status: OK"
-        echo "Result: ${result}"
-        if [[ "$result" == "#t" || "$result" == "#f" ]]; then
-          echo "Type: bool"
-        else
-          echo "Type: int"
-        fi
+        procedural)
+        g++ procedural/*.cpp -o procedural/minischeme
+        ./procedural/minischeme "$file"
         ;;
       *)
         echo "Status: ERROR"
