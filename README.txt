@@ -51,7 +51,16 @@ Progress in procedural:
   - The last expression evaluated is printed as the result
 
 Progress in oop:
-- progress here
+- currently supports: 
+- integer and boolean literals
+- arithmetic andcomparison operators 
+- if expressions
+- variable lookup with lexical scope
+- error categories 
+- in progress: 
+- let expressions
+- lambda expressions 
+- cond add-on 
 
 Requirements:
 - Functional: SBCL
