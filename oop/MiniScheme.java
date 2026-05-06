@@ -130,9 +130,28 @@ abstract class Expressions{
 				}
 			}
 	}
-	//let 
-	//new child environment
-	//add name and value to the new environment 
+	//let
+	public static class Let extends Expressions{
+		private String[] names;
+		private Expressions[] values;
+		private Expressions body;
+
+		public Let(String[] names, Expressions[] values, Expressions body){
+			this.names = names;
+			this.values = values;
+			this.body = body;
+		}
+		
+		@Override 
+		public Object evaluate(Environment env){
+		    //new child scope 
+		    Environment newEnv = new Environment(env);
+		    for (int i = 0; i < names.length; i++) {
+			newEnv.define(names[i], values[i].evaluate(env));
+		    }
+		    return body.evaluate(newEnv);
+		}
+	}
 
 	//lambda
 	//store name and body expression and current environment 
@@ -315,7 +334,7 @@ class Parser {
 		if (!hasMore()) throw new MSException("PARSE_ERROR");
 		String tok = consume();
 
-		//( means we are starting 
+		//( means starting 
 		if (tok.equals("(")) {
 			if (!hasMore()) throw new MSException("PARSE_ERROR");
 			String head = peek();
