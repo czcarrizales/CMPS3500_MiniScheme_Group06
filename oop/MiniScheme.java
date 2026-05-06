@@ -154,14 +154,53 @@ abstract class Expressions{
 		}
 
 		//lambda
-		//store name and body expression and current environment 
-		//return without evaluating the body 
-		//body only evalauates when the function is actually called
+		public static class Lambda extends Expressions {
+				private String[] params;
+				private Expressions body;
+
+				public Lambda(String[] params, Expressions body) {
+						this.params = params;
+						this.body = body;
+				}
+
+				@Override
+						public Object evaluate(Environment env) {
+								return new Closure(params, body, env);
+						}
+		}
 
 		//add-on cond
-		//loop through each clause 
-		//evaluate each condition until true
-		//reeturn result if true 
+		public static class Cond extends Expressions {
+				private Expressions[] conditions;
+				private Expressions[] results;
+				private Expressions elseResult; 
+
+				public Cond(Expressions[] conditions, Expressions[] results, Expressions elseResult) {
+						this.conditions = conditions;
+						this.results = results;
+						this.elseResult = elseResult;
+				}
+
+				@Override
+						public Object evaluate(Environment env) {
+								//loop through each clause in order
+								for (int i = 0; i < conditions.length; i++) {
+										Object condVal = conditions[i].evaluate(env);
+										if (!(condVal instanceof Boolean)) {
+												throw new MSException("TYPE_MISMATCH");
+										}
+										//returns result of first true clause
+										if ((Boolean) condVal) {
+												return results[i].evaluate(env);
+										}
+								}
+								if (elseResult != null) {
+										return elseResult.evaluate(env);
+								}
+								//no clause matched and no else
+								throw new MSException("PARSE_ERROR");
+						}
+		}
 
 		//define 
 		public static class Define extends Expressions {
@@ -195,70 +234,103 @@ abstract class Expressions{
 										String op = ((Prim) function).op;
 										return applyPrimitive(op, args, env);
 								}
-								throw new MSException("TYPE_MISMATCH");
-						}
-
-				private static Object applyPrimitive(String op, Expressions[] argExprs, Environment env) {
-						//Arithmetic: +, -, *, 
-						if (op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/")) {
-								int[] vals = evaluateInts(argExprs, env);
-								switch (op) {
-										case "+": {
-														  int r = 0;
-														  for (int v : vals) r += v;
-														  return r;
-												  }
-										case "-": {
-														  if (vals.length == 0) throw new MSException("WRONG_ARITY");
-														  int r = vals[0];
-														  for (int i = 1; i < vals.length; i++) r -= vals[i];
-														  return r;
-												  }
-										case "*": {
-														  int r = 1;
-														  for (int v : vals) r *= v;
-														  return r;
-												  }
-										case "/": {
-														  if (vals.length == 0) throw new MSException("WRONG_ARITY");
-														  int r = vals[0];
-														  for (int i = 1; i < vals.length; i++) {
-																  if (vals[i] == 0) throw new MSException("DIVISION_BY_ZERO");
-																  r /= vals[i];
-														  }
-														  return r;
-												  }
-								}
-						}
-
-						// Comparisons: =, <, >, <=, >= (always take exactly 2 args)
-						if (op.equals("=") || op.equals("<") || op.equals(">")
-										|| op.equals("<=") || op.equals(">=")) {
-								int[] vals = evaluateInts(argExprs, env);
-								if (vals.length != 2) throw new MSException("WRONG_ARITY");
-								switch (op) {
-										case "=":  return vals[0] == vals[1];
-										case "<":  return vals[0] <  vals[1];
-										case ">":  return vals[0] >  vals[1];
-										case "<=": return vals[0] <= vals[1];
-										case ">=": return vals[0] >= vals[1];
-								}
-						}
-
+								//throw new MSException("TYPE_MISMATCH");
+								//}
+				//lambda call
+				Object fnVal = function.evaluate(env);
+				if (!(fnVal instanceof Closure)) {
 						throw new MSException("TYPE_MISMATCH");
 				}
-
-				// Evaluate all arguments and return them as integers
-				// Throws TYPE_MISMATCH if any argument is not an integer
-				private static int[] evaluateInts(Expressions[] argExprs, Environment env) {
-						int[] vals = new int[argExprs.length];
-						for (int i = 0; i < argExprs.length; i++) {
-								Object v = argExprs[i].evaluate(env);
-								if (!(v instanceof Integer)) throw new MSException("TYPE_MISMATCH");
-								vals[i] = (Integer) v;
-						}
-						return vals;
+				Closure closure = (Closure) fnVal;
+				// param count
+				if (args.length != closure.params.length) {
+						throw new MSException("WRONG_ARITY");
 				}
+				//new scope extending closure's saved environment
+				Environment callEnv = new Environment(closure.env);
+				for (int i = 0; i < closure.params.length; i++) {
+						callEnv.define(closure.params[i], args[i].evaluate(env));
+				}
+
+				//evaluate body in new scope
+				return closure.body.evaluate(callEnv);
+				}
+		
+		private static Object applyPrimitive(String op, Expressions[] argExprs, Environment env) {
+				//Arithmetic: +, -, *, 
+				if (op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/")) {
+						int[] vals = evaluateInts(argExprs, env);
+						switch (op) {
+								case "+": {
+												  int r = 0;
+												  for (int v : vals) r += v;
+												  return r;
+										  }
+								case "-": {
+												  if (vals.length == 0) throw new MSException("WRONG_ARITY");
+												  int r = vals[0];
+												  for (int i = 1; i < vals.length; i++) r -= vals[i];
+												  return r;
+										  }
+								case "*": {
+												  int r = 1;
+												  for (int v : vals) r *= v;
+												  return r;
+										  }
+								case "/": {
+												  if (vals.length == 0) throw new MSException("WRONG_ARITY");
+												  int r = vals[0];
+												  for (int i = 1; i < vals.length; i++) {
+														  if (vals[i] == 0) throw new MSException("DIVISION_BY_ZERO");
+														  r /= vals[i];
+												  }
+												  return r;
+										  }
+						}
+				}
+
+				// Comparisons: =, <, >, <=, >= (always take exactly 2 args)
+				if (op.equals("=") || op.equals("<") || op.equals(">")
+								|| op.equals("<=") || op.equals(">=")) {
+						int[] vals = evaluateInts(argExprs, env);
+						if (vals.length != 2) throw new MSException("WRONG_ARITY");
+						switch (op) {
+								case "=":  return vals[0] == vals[1];
+								case "<":  return vals[0] <  vals[1];
+								case ">":  return vals[0] >  vals[1];
+								case "<=": return vals[0] <= vals[1];
+								case ">=": return vals[0] >= vals[1];
+						}
+				}
+
+				throw new MSException("TYPE_MISMATCH");
+		}
+
+		// Evaluate all arguments and return them as integers
+		// Throws TYPE_MISMATCH if any argument is not an integer
+		private static int[] evaluateInts(Expressions[] argExprs, Environment env) {
+				int[] vals = new int[argExprs.length];
+				for (int i = 0; i < argExprs.length; i++) {
+						Object v = argExprs[i].evaluate(env);
+						if (!(v instanceof Integer)) throw new MSException("TYPE_MISMATCH");
+						vals[i] = (Integer) v;
+				}
+				return vals;
+		}//closesevalints
+}//closes function expression
+
+}//closes expressions AbstractC
+
+//stores params, body env in lambda
+class Closure{
+		public String[] params;
+		public Expressions body;
+		public Environment env;
+
+		public Closure(String[] params, Expressions body, Environment env) {
+				this.params = params;
+				this.body = body;
+				this.env = env;
 		}
 }
 
@@ -382,11 +454,21 @@ class Parser {
 												body
 												);
 						}							
-
-
-
-
-
+						//lambda
+						if (head.equals("lambda")) {
+								consume();
+								if (!peek().equals("(")) throw new MSException("PARSE_ERROR");
+								consume();
+								List<String> params = new ArrayList<>();
+								while (!peek().equals(")")) {
+										params.add(consume());
+								}
+								consume();
+								Expressions body = parseExpr();
+								if (!peek().equals(")")) throw new MSException("PARSE_ERROR");
+								consume();
+								return new Expressions.Lambda(params.toArray(new String[0]), body);
+						}
 
 						//parse= define name value
 						if (head.equals("define")) {
@@ -397,8 +479,41 @@ class Parser {
 								consume(); 
 								return new Expressions.Define(name, val);
 						}
+						//cond 
+						if (head.equals("cond")) {
+								consume();
+								List<Expressions> conditions = new ArrayList<>();
+								List<Expressions> results = new ArrayList<>();
+								Expressions elseResult = null;
 
-						//parse= any function call like 
+								while (!peek().equals(")")) {
+										if (!peek().equals("(")) throw new MSException("PARSE_ERROR");
+										consume();
+										if (peek().equals("else")) {
+												consume();
+												elseResult = parseExpr();
+												if (!peek().equals(")")) throw new MSException("PARSE_ERROR");
+												consume();
+												break;
+										} else {
+												Expressions clauseCond = parseExpr();
+												Expressions clauseResult = parseExpr();
+												if (!peek().equals(")")) throw new MSException("PARSE_ERROR");
+												consume();
+												conditions.add(clauseCond);
+												results.add(clauseResult);
+										}
+								}
+								if (!peek().equals(")")) throw new MSException("PARSE_ERROR");
+								consume();
+								return new Expressions.Cond(
+												conditions.toArray(new Expressions[0]),
+												results.toArray(new Expressions[0]),
+												elseResult
+												);
+						}
+
+						//parse= any function call 
 						Expressions fn = parseExpr();
 						List<Expressions> args = new ArrayList<>();
 						while (!peek().equals(")")) {
@@ -484,12 +599,11 @@ public class MiniScheme {
 
 		public static String formatValue(Object val) {
 				if (val instanceof Boolean) return (Boolean) val ? "#t" : "#f";
+				if (val instanceof Closure) return "#<function>";
 				if (val == null) return "";
 				return val.toString();
 		}
 }
-
-
 
 
 
