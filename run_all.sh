@@ -130,4 +130,13 @@ fi
       echo "functional: ERROR -> ${functional_error}"
     fi
     ;;
+
+    *)
+    echo "Status: ERROR"
+    echo "Error: WRONG_INPUT"
+    echo "Usage: ./run_all.sh list-cases"
+    echo "Usage: ./run_all.sh run-case <implementation> <file>"
+    echo "Usage: ./run_all.sh compare-case <file>"
+    exit 0
+    ;;
 esac
