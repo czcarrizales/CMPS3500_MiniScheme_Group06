@@ -15,11 +15,27 @@ check_file_exists() {
 
 case "$cmd" in
   list-cases)
+
+  if [[ "$#" -ne 1 ]]; then
+    echo "Status: ERROR"
+    echo "Error: WRONG_INPUT"
+    echo "Usage: ./run_all.sh list-cases"
+    exit 0
+  fi
+
     find tests/public challenges/public -type f \
       \( -name '*.scm' -o -name '*.txt' \) 2>/dev/null | sort || true
     ;;
 
   run-case)
+
+    if [[ "$#" -ne 3 ]]; then
+    echo "Status: ERROR"
+    echo "Error: WRONG_INPUT"
+    echo "Usage: ./run_all.sh run-case <implementation> <file>"
+    exit 0
+    fi
+
     impl="${2:-}"
     file="${3:-}"
 
@@ -85,6 +101,14 @@ fi
     ;;
 
     compare-case)
+
+    if [[ "$#" -ne 2 ]]; then
+    echo "Status: ERROR"
+    echo "Error: WRONG_INPUT"
+    echo "Usage: ./run_all.sh compare-case <file>"
+    exit 0
+    fi
+    
     file="${2:-}"
 
     echo "Case: ${file}"
