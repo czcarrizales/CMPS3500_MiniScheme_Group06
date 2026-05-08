@@ -44,7 +44,7 @@ case "$cmd" in
 
     if ! check_file_exists "$file"; then
   echo "Status: ERROR"
-  echo "Error: PARSE_ERROR"
+  echo "Error: File '${file}' not found."
   exit 0
 fi
 
@@ -115,9 +115,7 @@ fi
     echo
 
     if ! check_file_exists "$file"; then
-  echo "procedural: ERROR -> PARSE_ERROR"
-  echo "oop:        ERROR -> PARSE_ERROR"
-  echo "functional: ERROR -> PARSE_ERROR"
+  echo "Error: File '${file}' not found."
   exit 0
 fi
 
@@ -156,11 +154,7 @@ fi
     ;;
 
     *)
-    echo "Status: ERROR"
-    echo "Error: WRONG_INPUT"
-    echo "Usage: ./run_all.sh list-cases"
-    echo "Usage: ./run_all.sh run-case <implementation> <file>"
-    echo "Usage: ./run_all.sh compare-case <file>"
+    echo "Error: Unknown command '${cmd}'. Valid commands are: list-cases, run-case, compare-case"
     exit 0
     ;;
 esac
