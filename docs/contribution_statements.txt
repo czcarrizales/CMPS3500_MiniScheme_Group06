@@ -1,0 +1,34 @@
+Student Name: Isaac Stokes 
+
+Main files/modules worked on: run_all.sh 
+
+Main responsibilities: Team lead. Coordinated the group, managed deadlines and responsibilities. Helped work on run_all.sh runner that ties all three implementations together. Helped with any questions/concerns anyone had with their code or outside of code.  
+
+What I can explain clearly: How run_all.sh works, what each command does, how it compiles and calls each implementation differently, how the output gets formatted 
+
+  
+Student Name: Emilio Calderon 
+
+Main files/modules worked on: procedural/procedural.cpp 
+
+Main responsibilities: Implement the evaluation logic for procedural expressions in the interpreter, handled functions and make sure that arguments are being evaluated and applied correctly, managed built in operations such as arithmetic and Boolean expressions, ensure that error handling for cases like wrong number of arguments, type mismatching, or division by zero,  worked with vector of nodes to evaluate expressions sequentially.  
+
+What I can explain clearly: How the interpreter evaluated expressions step by step, how procedure calls are handled, including argument evaluation and function execution, the role of node structure in representing expressions, The difference between syntax errors (parse-time) and runtime errors (evaluation-time), and how different constructs like lambda, let, and recursion are evaluated in the interpreter. 
+
+
+Student Name: Stephanie Esquivel 
+
+Main files/modules worked on: oop/MiniScheme.java 
+
+Main responsibilities: I designed and implemented the entire Java OOP implementation including the ADT environment, all expression subclasses, the Closure class, Tokenizer, parser, and main entry point. Also updated run_all.sh to correctly handle error output for the OOP implementation.  
+
+What I can explain clearly: I can explain how the environment class uses encapsulation to hide the HashMap and expose only define() and lookup(). How polymorphism works through the abstract evaluate() method that each subclass overrides. I can also explain how lexical scope is implemented through closures saving the environment at creation time. How recursion is supported through define adding function to the global environment. How the tokenizer, parser and evaluator work together as a pipeline to process expressions.  
+
+
+Student Name: Chazz Carrizales 
+
+Main files/modules worked on: functional/evaluator.lisp, run_all.sh, testing 
+
+Main responsibilities: I worked mainly on the Common Lisp functional evaluator and helped make sure run_all.sh could run and compare all three implementations correctly. I also helped test public cases, error cases, and the cond add-on, and helped prepare the technical brief and presentation. 
+
+What I can explain clearly: I can explain the main Lisp evaluation flow, environments, variable lookup, closures, lexical scope, cond, standardized errors, and how run_all.sh runs one implementation or compares all three.
