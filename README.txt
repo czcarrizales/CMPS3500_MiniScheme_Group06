@@ -1,75 +1,83 @@
-MiniScheme Checkpoint 3
+CMPS 3500 MiniScheme Comparative Implementation — Final Submission
+
+Project Overview:
+This project implements the same MiniScheme expression engine in three programming paradigms:
+procedural C++, object-oriented Java, and functional Common Lisp. Each implementation reads
+MiniScheme case files, evaluates expressions, and reports either a result with a type or a
+standardized error through the shared run_all.sh runner.
+
+Project Structure:
+- procedural/   C++ procedural implementation
+- oop/          Java object-oriented implementation
+- functional/   Common Lisp functional implementation
+- tests/        Public MiniScheme test cases
+- challenges/   Public/hidden challenge case folders
+- docs/         Technical brief and contribution statements
+- run_all.sh    Main command-line runner
+- README.txt    Project overview and run instructions
+
+Supported MiniScheme Features:
+All three implementations support:
+- Integer literals
+- Boolean literals
+- Primitive arithmetic: + - * /
+- Primitive comparisons: = < > <= >=
+- if expressions
+- let bindings
+- lambda functions
+- Function application
+- define for top-level bindings
+- Recursion
+- Lexical scope
+- cond add-on
+
+Required Error Categories:
+All three implementations handle:
+- PARSE_ERROR
+- UNDECLARED_IDENTIFIER
+- WRONG_ARITY
+- TYPE_MISMATCH
+- DIVISION_BY_ZERO
+
+Implementation Notes:
+
+Procedural (C++):
+- Reads input files and splits input into tokens
+- Parses expressions into a Node-style tree structure
+- Evaluates Nodes recursively
+- Uses an environment structure for variables and functions
+
+Object-Oriented (Java):
+- Uses tokenizer and parser logic to build expression objects
+- Organizes MiniScheme expressions through classes
+- Uses an Environment object for bindings
+- Uses closures for lambda functions and lexical scope
 
 Functional (Common Lisp):
-- Runs through run_all.sh
-- Supports integer literals
-- Supports boolean literals
-- Supports primitive arithmetic and comparisons
-- Supports if
-- Supports let
-- Supports lambda
-- Supports function application
-- Supports define
-- Supports recursion
-- Supports lexical scope
-- Supports cond
-- Handles required errors:
-  - PARSE_ERROR
-  - UNDECLARED_IDENTIFIER
-  - WRONG_ARITY
-  - TYPE_MISMATCH
-  - DIVISION_BY_ZERO
-
-Progress in procedural:
-  supported features:
-  - Integer literals
-  - Boolean literals (#t, #f)
-  - Arithmetic operations: + - * /
-  - Comparisons: = < > <= >=
-  - if expressions
-  - let bindings
-  - lambda functions
-  - function application
-  - define (top-level)
-  - recursion
-  - lexical scope
-  - cond
-  
-  The program handles the following errors:
-  - PARSE_ERROR
-  - UNDECLARED_IDENTIFIER
-  - WRONG_ARITY
-  - TYPE_MISMATCH
-  - DIVISION_BY_ZERO
-  
-  Notes:
-  - The program reads the entire file using readAll()
-  - Input is split into tokens using splitTokens()
-  - Expressions are parsed into a tree structure (Node)
-  - Each Node is evaluated recursively
-  - An environment structure is used to store variables and functions
-  - The last expression evaluated is printed as the result
-
-Progress in oop:
-- currently supports: 
-- integer and boolean literals
-- arithmetic andcomparison operators 
-- if expressions
-- variable lookup with lexical scope
-- error categories 
-- in progress: 
-- let expressions
-- lambda expressions 
-- cond add-on 
+- Uses recursive evaluation and list processing
+- Uses an environment to store variable and function bindings
+- Uses closures to preserve the environment where lambdas are created
+- Runs through SBCL
 
 Requirements:
-- Functional: SBCL
-- Procedural: g++
-- Object-Oriented: Java JDK
+- g++
+- Java JDK
+- SBCL
 
-How to run:
+Important:
+Run all commands from the top-level project folder, the same folder that contains run_all.sh.
+
+How to Run:
+- chmod +x run_all.sh
 - ./run_all.sh list-cases
-- ./run_all.sh run-case functional tests/public/core_01.scm
 - ./run_all.sh run-case procedural tests/public/core_01.scm
 - ./run_all.sh run-case oop tests/public/core_01.scm
+- ./run_all.sh run-case functional tests/public/core_01.scm
 - ./run_all.sh compare-case tests/public/core_01.scm
+- ./run_all.sh compare-case tests/public/recursion_01.scm
+- ./run_all.sh compare-case tests/public/error_01.scm
+- ./run_all.sh compare-case tests/public/addon_01.scm
+
+Defensive Scripting Examples:
+- ./run_all.sh compare-case fake_file.scm
+- ./run_all.sh bad-command
